@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using GenesisChallenge.Entities;
 using GenesisChallenge.EntityFramework;
+using GenesisChallenge.Repository.ExtensionMethods;
 
 namespace GenesisChallenge.Repository
 {
@@ -14,15 +15,21 @@ namespace GenesisChallenge.Repository
         /// <summary>
         ///     Retrieves all the customer orders
         /// </summary>
-        /// <returns></returns>
-        public async Task<List<CustomerOrder>> GetCustomerOrdersAsync()
+        /// <param name="recordsToSkip">Number of records to skip</param>
+        /// <param name="recordsToTake">Number of records to take</param>
+        /// <param name="sortColumn">Column to sort</param>
+        /// <param name="sortDirection">Sort direction</param>
+        /// <returns>List of customer orders</returns>
+        public async Task<QueryResult<CustomerOrder>> GetCustomerOrdersAsync(int recordsToSkip, int recordsToTake,
+            string sortColumn, SortDirection sortDirection)
         {
-            List<CustomerOrder> orders = null;
+            QueryResult<CustomerOrder> result = null;
             await Task.Run(() =>
             {
                 using (DatabaseContext db = new DatabaseContext())
                 {
-                    orders = (from o in db.Orders
+                    int count = db.Orders.Count();
+                    IQueryable<CustomerOrder> queryable = from o in db.Orders
                         join c in db.Customers on o.CustomerId equals c.Id
                         select new CustomerOrder
                         {
@@ -33,10 +40,28 @@ namespace GenesisChallenge.Repository
                             ReferenceNumber = o.ReferenceNumber,
                             OrderValue = o.OrderValue,
                             OrderDate = o.OrderDate
-                        }).ToList();
+                        };
+
+                    queryable = sortColumn == nameof(CustomerOrder.CustomerName)
+                        ? queryable.OrderBy(nameof(CustomerOrder.FirstName), sortDirection == SortDirection.Descending)
+                            .ThenBy(nameof(CustomerOrder.LastName), sortDirection == SortDirection.Descending)
+                        : queryable.OrderBy(sortColumn, sortDirection == SortDirection.Descending);
+
+                    //if (sortColumn == nameof(CustomerOrder.CustomerName))
+                    //{
+                    //    queryable = queryable.OrderBy(nameof(CustomerOrder.FirstName), sortDirection == SortDirection.Descending).ThenBy(nameof(CustomerOrder.LastName), sortDirection == SortDirection.Descending);
+                    //}
+                    //else
+                    //{
+                    //    queryable = queryable.OrderBy(sortColumn, sortDirection == SortDirection.Descending);
+                    //}
+                    result = new QueryResult<CustomerOrder>(count,
+                        queryable.Skip(recordsToSkip).Take(recordsToTake).ToList());
                 }
             });
-            return orders;
+
+            // return query object
+            return result;
         }
 
         /// <summary>
@@ -62,6 +87,7 @@ namespace GenesisChallenge.Repository
                     result = new PersistenceResult(false, errors);
                 }
 
+                // save it
                 using (DatabaseContext db = new DatabaseContext())
                 {
                     Customer customer = db.Customers.SingleOrDefault(s => s.Id == obj.Id);
@@ -81,6 +107,8 @@ namespace GenesisChallenge.Repository
 
                 result = new PersistenceResult(true, null);
             });
+
+            // return persistence result
             return result;
         }
     }

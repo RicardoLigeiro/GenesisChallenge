@@ -1,12 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using GenesisChallenge.Entities;
 
@@ -14,8 +8,6 @@ namespace GenesisChallenge
 {
     public partial class CustomerDetail : Form
     {
-        public CustomerOrder CustomerOrder { get; private set; }
-
         public CustomerDetail()
         {
             InitializeComponent();
@@ -24,6 +16,7 @@ namespace GenesisChallenge
         public CustomerDetail(CustomerOrder customer)
         {
             InitializeComponent();
+            // set variables and formats
             CustomerOrder = customer;
             txtEditFirstName.EditValue = customer.FirstName;
             txtEditLastName.EditValue = customer.LastName;
@@ -32,39 +25,46 @@ namespace GenesisChallenge
             lblOrderValue.Text = customer.OrderValue.ToString(ConfigurationManager.AppSettings["CurrencyFormat"]);
         }
 
+        /// <summary>
+        ///     Just to hold the customer info
+        /// </summary>
+        public CustomerOrder CustomerOrder { get; }
+
         private void btnCancel_Click(object sender, EventArgs e)
         {
-            this.Close();
+            Close();
         }
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-            this.DialogResult = DialogResult.OK;
-            this.Close();
+            DialogResult = DialogResult.OK;
+            Close();
         }
 
+        /// <summary>
+        ///     Control validation
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void txtEditFirstName_Validating(object sender, CancelEventArgs e)
         {
             if (string.IsNullOrEmpty(txtEditFirstName.Text))
-            {
                 e.Cancel = true;
-            }
             else
-            {
                 CustomerOrder.FirstName = txtEditFirstName.Text;
-            }
         }
 
+        /// <summary>
+        ///     Control validation
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void txtEditLastName_Validating(object sender, CancelEventArgs e)
         {
             if (string.IsNullOrEmpty(txtEditLastName.Text))
-            {
                 e.Cancel = true;
-            }
             else
-            {
                 CustomerOrder.LastName = txtEditLastName.Text;
-            }
         }
     }
 }

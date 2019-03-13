@@ -45,43 +45,67 @@ namespace GenesisChallenge.Tests
         public async void WhenQueryMockedDatabase_ShouldReturnResults()
         {
             Mock<ICustomerRepository> rep = new Mock<ICustomerRepository>();
-            rep.Setup(s => s.GetCustomerOrdersAsync()).Returns(Task.FromResult<List<CustomerOrder>>(GetSampleData()));
+            rep.Setup(s =>
+                    s.GetCustomerOrdersAsync(0, 3, nameof(CustomerOrder.ReferenceNumber), SortDirection.Ascending))
+                .Returns(Task.FromResult(new QueryResult<CustomerOrder>(1, GetSampleData())));
             var expected = GetSampleData();
-            var actual = await rep.Object.GetCustomerOrdersAsync();
+            var actual = await rep.Object.GetCustomerOrdersAsync(0, 3, nameof(CustomerOrder.ReferenceNumber),
+                SortDirection.Ascending);
 
             Assert.True(actual != null);
-            Assert.Equal(expected.Count(), actual.Count());
+            Assert.Equal(expected.Count(), actual.NumberOfRecords);
         }
 
         [Fact]
         public void WhenSavingCustomer_ShouldReturnTrue()
         {
             Mock<ICustomerRepository> rep = new Mock<ICustomerRepository>();
-            rep.Setup(s => s.SaveCustomerInfoAsync(It.IsAny<CustomerOrder>())).Returns(Task.FromResult(new PersistenceResult(true, null)));
+            rep.Setup(s => s.SaveCustomerInfoAsync(It.IsAny<CustomerOrder>()))
+                .Returns(Task.FromResult(new PersistenceResult(true, null)));
             Assert.True(rep.Object.SaveCustomerInfoAsync(new CustomerOrder()).Result.Success);
         }
 
-        ///// <summary>
-        /////     We could do this direct test against the repository as we expect to fail before reach database
-        ///// </summary>
-        //[Fact]
-        //public void WhenSavingNullCustomer_ShouldThrowArgumentNullException()
-        //{
-        //    ICustomerRepository rep = new CustomerRepository();
-        //    ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() => rep.SaveCustomerInfoAsync(null));
-        //    Assert.Equal("CustomerOrder", exception.ParamName);
-        //}
+        /// <summary>
+        ///     We could do this direct test against the repository as we expect to fail before reach database
+        /// </summary>
+        [Fact]
+        public void WhenSavingNullCustomer_ShouldThrowArgumentNullException()
+        {
+            ICustomerRepository rep = new CustomerRepository();
+            Task<ArgumentNullException> exception =
+                Assert.ThrowsAsync<ArgumentNullException>(() => rep.SaveCustomerInfoAsync(null));
+            Assert.Equal("CustomerOrder", exception.Result.ParamName);
+        }
 
-        ///// <summary>
-        ///// This would be used against a production server, witch many people consider it wrong as database might change a lot
-        ///// and you have to keep changing this method
-        ///// </summary>
-        //[Fact]
-        //public void WhenQueryLiveDatabase_ShouldReturnResults()
-        //{
-        //    ICustomerRepository rep = new CustomerRepository();
-        //    IEnumerable<CustomerOrder> results = rep.GetCustomerOrdersAsync();
-        //    Assert.True(results.Any());
-        //}
+        /// <summary>
+        ///     This it would be a integration test used against a production server,
+        /// </summary>
+        [Fact]
+        public async void WhenQueryLiveDatabase_ShouldReturnResults()
+        {
+            ICustomerRepository rep = new CustomerRepository();
+            QueryResult<CustomerOrder> results = await rep.GetCustomerOrdersAsync(0, 3,
+                nameof(CustomerOrder.ReferenceNumber), SortDirection.Ascending);
+            Assert.True(results.Records.Any());
+        }
+
+        /// <summary>
+        ///     Another integration test
+        /// </summary>
+        [Fact]
+        public async void WhenSavingCustomerDate_ResultShouldBeOk()
+        {
+            ICustomerRepository rep = new CustomerRepository();
+            QueryResult<CustomerOrder> results = await rep.GetCustomerOrdersAsync(0, 3,
+                nameof(CustomerOrder.ReferenceNumber), SortDirection.Ascending);
+
+            Assert.True(results.Records.Any());
+
+            CustomerOrder obj = results.Records.First();
+            obj.FirstName = "Hello";
+            PersistenceResult result = await rep.SaveCustomerInfoAsync(obj);
+
+            Assert.True(result.Success);
+        }
     }
 }

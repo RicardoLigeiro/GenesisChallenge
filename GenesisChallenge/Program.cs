@@ -17,6 +17,7 @@ namespace GenesisChallenge
         [STAThread]
         static void Main()
         {
+            // set up the DI container
             IUnityContainer container = new UnityContainer();
             container.RegisterType<ICustomerRepository, CustomerRepository>();
 

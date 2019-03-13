@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using GenesisChallenge.Entities;
 
@@ -13,8 +14,12 @@ namespace GenesisChallenge.Repository
         /// <summary>
         ///     Retrieves all the customer orders
         /// </summary>
-        /// <returns></returns>
-        Task<List<CustomerOrder>> GetCustomerOrdersAsync();
+        /// <param name="recordsToSkip">Number of records to skip</param>
+        /// <param name="recordsToTake">Number of records to take</param>
+        /// <param name="sortColumn">Column to sort</param>
+        /// <param name="sortDirection">Sort direction</param>
+        /// <returns>List of customer orders</returns>
+        Task<QueryResult<CustomerOrder>> GetCustomerOrdersAsync(int recordsToSkip, int recordsToTake, string sortColumn, SortDirection sortDirection);
 
         /// <summary>
         ///     Saves the customer info (First and Last name)
