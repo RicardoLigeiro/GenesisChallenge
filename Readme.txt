@@ -34,5 +34,5 @@ GenesisChallenge.Tests
 NOTE: We could might have a service layer that would work with the repository and be exposed to the UI, but
 those are a matter of choose.
 
-Thanks, Hope yu like it
+Thanks, hope you like it
 Ricardo
